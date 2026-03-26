@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-
+const API = "https://stylevault.onrender.com/api";
 const INITIAL_ITEMS = [
   { id: 1, emoji: "👕", name: "white linen shirt", color: "crisp white", cat: "tops", style: "minimal", tags: ["linen", "white", "minimal", "casual"] },
   { id: 2, emoji: "🎀", name: "pink ruffle top", color: "dusty rose", cat: "tops", style: "feminine", tags: ["pink", "ruffle", "feminine", "romantic"] },
