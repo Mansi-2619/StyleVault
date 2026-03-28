@@ -1,18 +1,18 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef } from "react";
 
 const INITIAL_ITEMS = [
-  { id: 1, emoji: "👕", name: "white linen shirt", color: "crisp white", cat: "tops", style: "minimal", tags: ["linen", "white", "minimal", "casual"] },
-  { id: 2, emoji: "🎀", name: "pink ruffle top", color: "dusty rose", cat: "tops", style: "feminine", tags: ["pink", "ruffle", "feminine", "romantic"] },
-  { id: 3, emoji: "🖤", name: "black crop top", color: "solid black", cat: "tops", style: "edgy", tags: ["black", "crop", "edgy", "casual"] },
-  { id: 4, emoji: "🌸", name: "floral blouse", color: "white floral", cat: "tops", style: "romantic", tags: ["floral", "white", "romantic", "feminine"] },
-  { id: 5, emoji: "👖", name: "blue wide-leg jeans", color: "mid wash blue", cat: "bottoms", style: "casual", tags: ["blue", "denim", "wide-leg", "casual"] },
-  { id: 6, emoji: "🖤", name: "black tailored trousers", color: "solid black", cat: "bottoms", style: "formal", tags: ["black", "formal", "tailored", "office"] },
-  { id: 7, emoji: "🪷", name: "floral midi skirt", color: "pink & white", cat: "bottoms", style: "romantic", tags: ["floral", "pink", "midi", "skirt", "romantic"] },
-  { id: 8, emoji: "👗", name: "beige slip dress", color: "warm beige", cat: "dresses", style: "elegant", tags: ["beige", "slip", "elegant", "minimal"] },
-  { id: 9, emoji: "🌺", name: "red floral sundress", color: "red floral", cat: "dresses", style: "feminine", tags: ["red", "floral", "sundress", "bold"] },
-  { id: 10, emoji: "👟", name: "white sneakers", color: "clean white", cat: "footwear", style: "casual", tags: ["white", "sneakers", "casual", "sporty"] },
-  { id: 11, emoji: "👠", name: "nude heels", color: "nude/beige", cat: "footwear", style: "classic", tags: ["nude", "heels", "classic", "elegant"] },
-  { id: 12, emoji: "💍", name: "gold layered necklace", color: "gold", cat: "accessories", style: "minimal", tags: ["gold", "necklace", "layered", "minimal"] },
+  { id: 1, emoji: "👕", name: "white linen shirt", color: "crisp white", cat: "tops", style: "minimal", tags: ["linen", "white", "minimal", "casual"], image: null },
+  { id: 2, emoji: "🎀", name: "pink ruffle top", color: "dusty rose", cat: "tops", style: "feminine", tags: ["pink", "ruffle", "feminine", "romantic"], image: null },
+  { id: 3, emoji: "🖤", name: "black crop top", color: "solid black", cat: "tops", style: "edgy", tags: ["black", "crop", "edgy", "casual"], image: null },
+  { id: 4, emoji: "🌸", name: "floral blouse", color: "white floral", cat: "tops", style: "romantic", tags: ["floral", "white", "romantic", "feminine"], image: null },
+  { id: 5, emoji: "👖", name: "blue wide-leg jeans", color: "mid wash blue", cat: "bottoms", style: "casual", tags: ["blue", "denim", "wide-leg", "casual"], image: null },
+  { id: 6, emoji: "🖤", name: "black tailored trousers", color: "solid black", cat: "bottoms", style: "formal", tags: ["black", "formal", "tailored", "office"], image: null },
+  { id: 7, emoji: "🪷", name: "floral midi skirt", color: "pink & white", cat: "bottoms", style: "romantic", tags: ["floral", "pink", "midi", "skirt", "romantic"], image: null },
+  { id: 8, emoji: "👗", name: "beige slip dress", color: "warm beige", cat: "dresses", style: "elegant", tags: ["beige", "slip", "elegant", "minimal"], image: null },
+  { id: 9, emoji: "🌺", name: "red floral sundress", color: "red floral", cat: "dresses", style: "feminine", tags: ["red", "floral", "sundress", "bold"], image: null },
+  { id: 10, emoji: "👟", name: "white sneakers", color: "clean white", cat: "footwear", style: "casual", tags: ["white", "sneakers", "casual", "sporty"], image: null },
+  { id: 11, emoji: "👠", name: "nude heels", color: "nude/beige", cat: "footwear", style: "classic", tags: ["nude", "heels", "classic", "elegant"], image: null },
+  { id: 12, emoji: "💍", name: "gold layered necklace", color: "gold", cat: "accessories", style: "minimal", tags: ["gold", "necklace", "layered", "minimal"], image: null },
 ];
 
 const CATS = [
@@ -27,14 +27,6 @@ const CATS = [
 ];
 
 const OCCASIONS = ["casual", "date night", "office", "party", "festive", "gym"];
-
-const UPLOAD_SAMPLES = [
-  { emoji: "🌷", name: "pastel lilac co-ord set", cat: "tops", color: "lilac", tags: ["lilac", "co-ord", "pastel", "trendy"] },
-  { emoji: "🩱", name: "white broderie top", cat: "tops", color: "white", tags: ["white", "broderie", "summer", "feminine"] },
-  { emoji: "🩴", name: "brown kolhapuri sandals", cat: "footwear", color: "tan brown", tags: ["brown", "ethnic", "kolhapuri", "flat"] },
-  { emoji: "⌚", name: "rose gold watch", cat: "watches", color: "rose gold", tags: ["rose gold", "watch", "elegant", "accessory"] },
-  { emoji: "💎", name: "pearl drop earrings", cat: "jewellery", color: "white pearl", tags: ["pearl", "earrings", "elegant", "formal"] },
-];
 
 async function callClaude(systemPrompt, userMessage, imageBase64 = null) {
   const content = imageBase64
@@ -58,6 +50,18 @@ async function callClaude(systemPrompt, userMessage, imageBase64 = null) {
   return data.content?.[0]?.text || "";
 }
 
+// Check if two outfits have the same piece IDs (regardless of order)
+function outfitsAreSame(a, b) {
+  if (!a || !b) return false;
+  const idsA = [...a.pieces.map(p => p.id)].sort().join(",");
+  const idsB = [...b.pieces.map(p => p.id)].sort().join(",");
+  return idsA === idsB;
+}
+
+function outfitAlreadySaved(outfit, savedOutfits) {
+  return savedOutfits.some(saved => outfitsAreSame(saved, outfit));
+}
+
 export default function StyleVault() {
   const [tab, setTab] = useState("wardrobe");
   const [items, setItems] = useState(INITIAL_ITEMS);
@@ -65,17 +69,18 @@ export default function StyleVault() {
   const [occasion, setOccasion] = useState("casual");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [outfitResult, setOutfitResult] = useState(null);
+  const [outfitHistory, setOutfitHistory] = useState([]); // track all generated outfits to avoid repeats
+  const [repeatWarning, setRepeatWarning] = useState(false);
   const [savedOutfits, setSavedOutfits] = useState([]);
   const [matchItem, setMatchItem] = useState(null);
   const [matchResult, setMatchResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadPreview, setUploadPreview] = useState(null);
-  const [uploadSampleIdx, setUploadSampleIdx] = useState(0);
   const [addForm, setAddForm] = useState({ name: "", cat: "tops", color: "", notes: "" });
   const [notification, setNotification] = useState(null);
   const fileRef = useRef();
 
-  const notify = (msg) => { setNotification(msg); setTimeout(() => setNotification(null), 2500); };
+  const notify = (msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); };
 
   const visibleItems = cat === "all" ? items : items.filter(i => i.cat === cat);
   const catCount = (c) => items.filter(i => i.cat === c).length;
@@ -93,33 +98,40 @@ export default function StyleVault() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async (ev) => {
-      const base64 = ev.target.result.split(",")[1];
-      setUploadPreview({ loading: true, emoji: "📸", base64 });
+      const dataUrl = ev.target.result;
+      const base64 = dataUrl.split(",")[1];
+      setUploadPreview({ loading: true, base64, dataUrl });
       try {
         const raw = await callClaude(
-          `You are a fashion AI. Analyze the clothing item in the photo and return ONLY a JSON object with keys: name (string, short descriptive name), cat (one of: tops/bottoms/dresses/footwear/accessories/watches/jewellery), color (string), tags (array of 4-5 strings). No markdown, no explanation, just raw JSON.`,
-          "Analyze this clothing item.",
+          `You are a fashion AI that analyzes clothing photos. Your job is to detect ONLY the clothing items that are CLEARLY and FULLY visible in the image.
+
+STRICT RULES:
+- ONLY describe what you can actually see in the photo
+- Do NOT guess or infer items that are partially visible, cut off, or not in the frame
+- Do NOT include footwear, accessories, or other items unless they are clearly visible in the image
+- Focus on the MAIN clothing item(s) shown
+- If you can only see the upper half of an outfit, only describe the upper half items
+
+Return ONLY a JSON object with keys:
+- name (string, short descriptive name of the main visible item)
+- cat (one of: tops/bottoms/dresses/footwear/accessories/watches/jewellery)
+- color (string, describe actual visible color)
+- tags (array of 4-5 strings describing what you actually see)
+
+No markdown, no explanation, just raw JSON.`,
+          "Analyze ONLY what clothing items are clearly visible in this photo. Do not guess items that are not shown.",
           base64
         );
         const clean = raw.replace(/```json|```/g, "").trim();
         const parsed = JSON.parse(clean);
-        setUploadPreview({ loading: false, base64, ...parsed, emoji: UPLOAD_SAMPLES[0].emoji });
+        setUploadPreview({ loading: false, base64, dataUrl, ...parsed });
         setAddForm({ name: parsed.name || "", cat: parsed.cat || "tops", color: parsed.color || "", notes: "" });
       } catch {
-        const sample = UPLOAD_SAMPLES[uploadSampleIdx % UPLOAD_SAMPLES.length];
-        setUploadPreview({ loading: false, ...sample, base64: null });
-        setAddForm({ name: sample.name, cat: sample.cat, color: sample.color, notes: "" });
-        setUploadSampleIdx(i => i + 1);
+        setUploadPreview({ loading: false, base64, dataUrl, name: "", cat: "tops", color: "", tags: [] });
+        setAddForm({ name: "", cat: "tops", color: "", notes: "" });
       }
     };
     reader.readAsDataURL(file);
-  };
-
-  const simulateUpload = () => {
-    const sample = UPLOAD_SAMPLES[uploadSampleIdx % UPLOAD_SAMPLES.length];
-    setUploadPreview({ loading: false, ...sample, base64: null });
-    setAddForm({ name: sample.name, cat: sample.cat, color: sample.color, notes: "" });
-    setUploadSampleIdx(i => i + 1);
   };
 
   const addItem = () => {
@@ -127,12 +139,14 @@ export default function StyleVault() {
     const emojis = { tops: "👕", bottoms: "👖", dresses: "👗", footwear: "👟", accessories: "💍", watches: "⌚", jewellery: "💎" };
     const newItem = {
       id: Date.now(),
-      emoji: uploadPreview?.emoji || emojis[addForm.cat] || "🎀",
+      emoji: emojis[addForm.cat] || "🎀",
       name: addForm.name,
       color: addForm.color || "unknown",
       cat: addForm.cat,
       style: "custom",
       tags: uploadPreview?.tags || [addForm.cat, addForm.color],
+      // Store the actual image dataUrl for display
+      image: uploadPreview?.dataUrl || null,
     };
     setItems(prev => [...prev, newItem]);
     setUploadPreview(null);
@@ -144,17 +158,39 @@ export default function StyleVault() {
   const generateOutfit = async () => {
     setLoading(true);
     setOutfitResult(null);
+    setRepeatWarning(false);
+    
+    // Build a list of previously suggested outfit combos to exclude
+    const previousCombos = outfitHistory
+      .filter(o => o.occasion === occasion)
+      .map(o => o.pieces.map(p => p.id).sort().join(","));
+
     const wardrobe = items.map(i => `id:${i.id} | ${i.name} | ${i.color} | ${i.cat} | tags: ${i.tags?.join(", ")}`).join("\n");
+    const excludeNote = previousCombos.length > 0
+      ? `\n\nIMPORTANT: Do NOT suggest these previously used outfit combinations (by item ids): ${previousCombos.join(" | ")}. Pick a FRESH combination.`
+      : "";
+
     try {
       const raw = await callClaude(
         `You are a personal stylist AI for girls. You suggest creative outfits from a given wardrobe. Return ONLY JSON with keys: pieces (array of item ids as numbers), note (a fun, enthusiastic 1-2 sentence style note with emojis). No markdown, just raw JSON.`,
-        `My wardrobe:\n${wardrobe}\n\nCreate the perfect ${occasion} outfit. Pick 3-4 pieces that go together (at least 1 top or dress + 1 bottom or dress + optionally footwear/accessories). Return JSON.`
+        `My wardrobe:\n${wardrobe}\n\nCreate the perfect ${occasion} outfit. Pick 3-4 pieces that go together (at least 1 top or dress + 1 bottom or dress + optionally footwear/accessories). Return JSON.${excludeNote}`
       );
       const clean = raw.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
       const pieces = parsed.pieces.map(id => items.find(i => i.id === Number(id))).filter(Boolean);
       if (pieces.length < 2) throw new Error("too few pieces");
-      setOutfitResult({ pieces, note: parsed.note, occasion });
+
+      const newOutfit = { pieces, note: parsed.note, occasion };
+
+      // Check if this outfit is a repeat of recent history
+      const isRepeat = outfitHistory.some(prev => outfitsAreSame(prev, newOutfit));
+      if (isRepeat) setRepeatWarning(true);
+
+      setOutfitResult(newOutfit);
+      // Add to history only if not already there
+      if (!isRepeat) {
+        setOutfitHistory(prev => [...prev, newOutfit]);
+      }
     } catch {
       const fallbacks = {
         casual: { ids: [1, 5, 10], note: "white linen + wide-leg jeans + sneakers = effortless cool girl energy! 🤍👟" },
@@ -166,13 +202,21 @@ export default function StyleVault() {
       };
       const fb = fallbacks[occasion] || fallbacks.casual;
       const pieces = fb.ids.map(id => items.find(i => i.id === id)).filter(Boolean);
-      setOutfitResult({ pieces, note: fb.note, occasion });
+      const fallbackOutfit = { pieces, note: fb.note, occasion };
+      const isRepeat = outfitHistory.some(prev => outfitsAreSame(prev, fallbackOutfit));
+      if (isRepeat) setRepeatWarning(true);
+      setOutfitResult(fallbackOutfit);
+      if (!isRepeat) setOutfitHistory(prev => [...prev, fallbackOutfit]);
     }
     setLoading(false);
   };
 
   const saveOutfit = () => {
     if (!outfitResult) return;
+    if (outfitAlreadySaved(outfitResult, savedOutfits)) {
+      notify("this outfit is already saved! 💕");
+      return;
+    }
     setSavedOutfits(prev => [...prev, { ...outfitResult, id: Date.now(), savedAt: new Date().toLocaleDateString() }]);
     notify("outfit saved! 💕");
   };
@@ -197,6 +241,17 @@ export default function StyleVault() {
     }
     setLoading(false);
   };
+
+  // Renders either real image or emoji fallback
+  const ItemDisplay = ({ item, size = 100, fontSize = 34, borderRadius = 0 }) => (
+    item.image
+      ? <img src={item.image} alt={item.name}
+          style={{ width: size, height: size, objectFit: "cover", borderRadius, display: "block" }} />
+      : <div style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize, background: "#f0ece6", borderRadius }}>
+          {item.emoji}
+        </div>
+  );
 
   const s = styles;
 
@@ -251,7 +306,9 @@ export default function StyleVault() {
                   {visibleItems.map(item => (
                     <div key={item.id} style={{ ...s.clothCard, ...(selectedIds.has(item.id) ? s.clothCardSelected : {}) }}
                       onClick={() => toggleSelect(item.id)}>
-                      <div style={s.clothImg}>{item.emoji}</div>
+                      <div style={{ width: "100%", aspectRatio: "1", overflow: "hidden" }}>
+                        <ItemDisplay item={item} size="100%" fontSize={34} />
+                      </div>
                       <div style={s.clothInfo}>
                         <div style={s.clothName}>{item.name}</div>
                         <div style={s.clothColor}>{item.color}</div>
@@ -275,6 +332,14 @@ export default function StyleVault() {
                       onClick={() => setOccasion(occ)}>{occ}</button>
                   ))}
                 </div>
+
+                {/* Repeat warning banner */}
+                {repeatWarning && outfitResult && (
+                  <div style={s.repeatWarning}>
+                    ⚠️ This outfit has already been suggested before! Tap "✨ suggest outfit" again for a fresh look.
+                  </div>
+                )}
+
                 {outfitResult && (
                   <div style={s.outfitResult}>
                     <div style={s.outfitRow}>
@@ -282,7 +347,9 @@ export default function StyleVault() {
                         <span key={p.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           {i > 0 && <span style={{ color: "#ccc", fontSize: 18 }}>+</span>}
                           <div style={s.outfitPiece}>
-                            <div style={{ ...s.clothImg, width: 72, height: 72, fontSize: 28, borderRadius: 10 }}>{p.emoji}</div>
+                            <div style={{ width: 72, height: 72, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
+                              <ItemDisplay item={p} size={72} fontSize={28} borderRadius={10} />
+                            </div>
                             <p style={{ fontSize: 10, color: "#888", marginTop: 4, textAlign: "center", maxWidth: 72 }}>{p.name}</p>
                           </div>
                         </span>
@@ -321,7 +388,9 @@ export default function StyleVault() {
                           <span key={p.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             {i > 0 && <span style={{ color: "#ccc" }}>+</span>}
                             <div style={s.outfitPiece}>
-                              <div style={{ ...s.clothImg, width: 64, height: 64, fontSize: 26, borderRadius: 10 }}>{p.emoji}</div>
+                              <div style={{ width: 64, height: 64, borderRadius: 10, overflow: "hidden" }}>
+                                <ItemDisplay item={p} size={64} fontSize={26} borderRadius={10} />
+                              </div>
                               <p style={{ fontSize: 10, color: "#888", marginTop: 4, textAlign: "center", maxWidth: 64 }}>{p.name}</p>
                             </div>
                           </span>
@@ -346,7 +415,9 @@ export default function StyleVault() {
                 {items.map(item => (
                   <div key={item.id} style={{ ...s.clothCard, ...(matchItem?.id === item.id ? s.clothCardSelected : {}) }}
                     onClick={() => getMatches(item)}>
-                    <div style={s.clothImg}>{item.emoji}</div>
+                    <div style={{ width: "100%", aspectRatio: "1", overflow: "hidden" }}>
+                      <ItemDisplay item={item} size="100%" fontSize={34} />
+                    </div>
                     <div style={s.clothInfo}>
                       <div style={s.clothName}>{item.name}</div>
                       <div style={s.clothColor}>{item.color}</div>
@@ -361,7 +432,9 @@ export default function StyleVault() {
                   <div style={{ ...s.outfitRow, marginTop: 12, flexWrap: "wrap" }}>
                     {matchResult.matches.map(p => (
                       <div key={p.id} style={s.outfitPiece}>
-                        <div style={{ ...s.clothImg, width: 72, height: 72, fontSize: 28, borderRadius: 10 }}>{p.emoji}</div>
+                        <div style={{ width: 72, height: 72, borderRadius: 10, overflow: "hidden" }}>
+                          <ItemDisplay item={p} size={72} fontSize={28} borderRadius={10} />
+                        </div>
                         <p style={{ fontSize: 10, color: "#888", marginTop: 4, textAlign: "center", maxWidth: 72 }}>{p.name}</p>
                       </div>
                     ))}
@@ -384,8 +457,7 @@ export default function StyleVault() {
                     <div style={s.uploadArea} onClick={() => fileRef.current?.click()}>
                       <div style={{ fontSize: 40 }}>📸</div>
                       <p style={{ fontSize: 14, color: "#888", marginTop: 8 }}>tap to upload photo</p>
-                      <p style={{ fontSize: 11, color: "#bbb", marginTop: 4 }}>AI will auto-detect color, category & style</p>
-                      <button style={s.demoBtn} onClick={(e) => { e.stopPropagation(); simulateUpload(); }}>or try demo upload</button>
+                      <p style={{ fontSize: 11, color: "#bbb", marginTop: 4 }}>AI will detect only what's visible in the photo</p>
                       <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileUpload} />
                     </div>
                   ) : (
@@ -397,11 +469,16 @@ export default function StyleVault() {
                         </div>
                       ) : (
                         <>
-                          <div style={{ background: "#f0ece6", height: 140, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56 }}>
-                            {uploadPreview.emoji}
+                          {/* Show real uploaded image */}
+                          <div style={{ height: 180, overflow: "hidden", borderRadius: "14px 14px 0 0" }}>
+                            <img
+                              src={uploadPreview.dataUrl}
+                              alt="uploaded item"
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
                           </div>
                           <div style={{ padding: 12 }}>
-                            <p style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>AI detected:</p>
+                            <p style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>AI detected (visible items only):</p>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                               {(uploadPreview.tags || []).map(t => (
                                 <span key={t} style={s.tag}>{t}</span>
@@ -410,7 +487,7 @@ export default function StyleVault() {
                           </div>
                         </>
                       )}
-                      <button style={{ ...s.demoBtn, margin: "8px 12px 12px" }} onClick={() => setUploadPreview(null)}>try another</button>
+                      <button style={{ ...s.demoBtn, margin: "8px 12px 12px" }} onClick={() => { setUploadPreview(null); fileRef.current && (fileRef.current.value = ""); }}>try another</button>
                     </div>
                   )}
                 </div>
@@ -479,6 +556,7 @@ const styles = {
   chips: { display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 14 },
   chip: { padding: "5px 13px", borderRadius: 20, border: "0.5px solid #e0ddd8", fontSize: 12, cursor: "pointer", background: "none", fontFamily: "inherit", color: "#8A8A8E", transition: "all 0.2s" },
   chipActive: { background: "#1C1C1E", color: "#F2C4CE", borderColor: "#1C1C1E" },
+  repeatWarning: { background: "#fff8e1", border: "1px solid #f5c842", borderRadius: 10, padding: "10px 14px", fontSize: 12, color: "#7a6200", marginBottom: 12 },
   outfitResult: { animation: "fadeIn 0.4s ease" },
   outfitRow: { display: "flex", alignItems: "flex-start", gap: 8, flexWrap: "wrap" },
   outfitPiece: { display: "flex", flexDirection: "column", alignItems: "center" },
@@ -491,7 +569,7 @@ const styles = {
   previewCard: { background: "#fff", borderRadius: 14, border: "0.5px solid #e0ddd8", overflow: "hidden" },
   demoBtn: { marginTop: 12, background: "none", border: "0.5px solid #e0ddd8", color: "#888", padding: "6px 14px", borderRadius: 20, fontFamily: "inherit", fontSize: 11, cursor: "pointer" },
   inputLabel: { fontSize: 12, color: "#8A8A8E", display: "block", marginBottom: 5 },
-  input: { width: "100%", padding: "9px 12px", border: "0.5px solid #e0ddd8", borderRadius: 9, fontFamily: "inherit", fontSize: 13, background: "#fff", color: "#1C1C1E", outline: "none" },
+  input: { width: "100%", padding: "9px 12px", border: "0.5px solid #e0ddd8", borderRadius: 9, fontFamily: "inherit", fontSize: 13, background: "#fff", color: "#1C1C1E", outline: "none", boxSizing: "border-box" },
   confirmAddBtn: { background: "#1C1C1E", color: "#F2C4CE", border: "none", padding: 11, borderRadius: 10, fontFamily: "inherit", fontSize: 13, cursor: "pointer", marginTop: "auto" },
   tag: { fontSize: 10, padding: "3px 9px", borderRadius: 10, background: "rgba(201,122,142,0.1)", color: "#C97A8E" },
 };
