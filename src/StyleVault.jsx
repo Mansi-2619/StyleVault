@@ -62,6 +62,39 @@ function outfitAlreadySaved(outfit, savedOutfits) {
   return savedOutfits.some(saved => outfitsAreSame(saved, outfit));
 }
 
+// Renders real uploaded image or emoji fallback
+function ItemDisplay({ item, size = 100, fontSize = 34, borderRadius = 0, fill = false }) {
+  if (item.image) {
+    return (
+      <img
+        src={item.image}
+        alt={item.name}
+        style={{
+          width: fill ? "100%" : size,
+          height: fill ? "100%" : size,
+          objectFit: "cover",
+          borderRadius,
+          display: "block",
+        }}
+      />
+    );
+  }
+  return (
+    <div style={{
+      width: fill ? "100%" : size,
+      height: fill ? "100%" : size,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize,
+      background: "#f0ece6",
+      borderRadius,
+    }}>
+      {item.emoji}
+    </div>
+  );
+}
+
 export default function StyleVault() {
   const [tab, setTab] = useState("wardrobe");
   const [items, setItems] = useState(INITIAL_ITEMS);
@@ -143,6 +176,8 @@ No markdown, no explanation, just raw JSON.`,
   const addItem = () => {
     if (!addForm.name.trim()) { notify("please enter a name!"); return; }
     const emojis = { tops: "👕", bottoms: "👖", dresses: "👗", footwear: "👟", accessories: "💍", watches: "⌚", jewellery: "💎" };
+    const imageToSave = uploadPreview?.dataUrl || null;
+    console.log("Adding item, image dataUrl present:", !!imageToSave, "uploadPreview:", uploadPreview);
     const newItem = {
       id: Date.now(),
       emoji: emojis[addForm.cat] || "🎀",
@@ -151,9 +186,9 @@ No markdown, no explanation, just raw JSON.`,
       cat: addForm.cat,
       style: "custom",
       tags: uploadPreview?.tags || [addForm.cat, addForm.color],
-      // Store the actual image dataUrl for display
-      image: uploadPreview?.dataUrl || null,
+      image: imageToSave,
     };
+    console.log("New item image:", newItem.image ? "HAS IMAGE" : "NO IMAGE");
     setItems(prev => [...prev, newItem]);
     setUploadPreview(null);
     setAddForm({ name: "", cat: "tops", color: "", notes: "" });
@@ -247,17 +282,6 @@ No markdown, no explanation, just raw JSON.`,
     }
     setLoading(false);
   };
-
-  // Renders either real image or emoji fallback
-  const ItemDisplay = ({ item, size = 100, fontSize = 34, borderRadius = 0, fill = false }) => (
-    item.image
-      ? <img src={item.image} alt={item.name}
-          style={{ width: fill ? "100%" : size, height: fill ? "100%" : size, objectFit: "cover", borderRadius, display: "block" }} />
-      : <div style={{ width: fill ? "100%" : size, height: fill ? "100%" : size, display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize, background: "#f0ece6", borderRadius }}>
-          {item.emoji}
-        </div>
-  );
 
   const s = styles;
 
