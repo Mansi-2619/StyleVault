@@ -44,7 +44,7 @@ async function callClaude(systemPrompt, userMessage, imageBase64 = null) {
       ]
     : userMessage;
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch("https:///api/claude", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -105,12 +105,10 @@ export default function StyleVault() {
         const parsed = JSON.parse(clean);
         setUploadPreview({ loading: false, base64, ...parsed, emoji: UPLOAD_SAMPLES[0].emoji });
         setAddForm({ name: parsed.name || "", cat: parsed.cat || "tops", color: parsed.color || "", notes: "" });
-      } catch {
-        const sample = UPLOAD_SAMPLES[uploadSampleIdx % UPLOAD_SAMPLES.length];
-        setUploadPreview({ loading: false, ...sample, base64: null });
-        setAddForm({ name: sample.name, cat: sample.cat, color: sample.color, notes: "" });
-        setUploadSampleIdx(i => i + 1);
-      }
+      } } catch {
+  setUploadPreview({ loading: false, base64, dataUrl, name: "", cat: "tops", color: "", tags: [] });
+  setAddForm({ name: "", cat: "tops", color: "", notes: "" });
+}
     };
     reader.readAsDataURL(file);
   };
