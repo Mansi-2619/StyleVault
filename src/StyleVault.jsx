@@ -28,10 +28,10 @@ const CATS = [
 
 const OCCASIONS = ["casual", "date night", "office", "party", "festive", "gym"];
 
-async function callClaude(systemPrompt, userMessage, imageBase64 = null) {
+async function callClaude(systemPrompt, userMessage, imageBase64 = null, mediaType = "image/jpeg") {
   const content = imageBase64
     ? [
-        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } },
+        { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
         { type: "text", text: userMessage },
       ]
     : userMessage;
@@ -96,11 +96,16 @@ export default function StyleVault() {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Detect actual media type from file
+    const mediaType = file.type === "image/png" ? "image/png"
+      : file.type === "image/webp" ? "image/webp"
+      : file.type === "image/gif" ? "image/gif"
+      : "image/jpeg";
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const dataUrl = ev.target.result;
       const base64 = dataUrl.split(",")[1];
-      setUploadPreview({ loading: true, base64, dataUrl });
+      setUploadPreview({ loading: true, base64, dataUrl, mediaType });
       try {
         const raw = await callClaude(
           `You are a fashion AI that analyzes clothing photos. Your job is to detect ONLY the clothing items that are CLEARLY and FULLY visible in the image.
@@ -120,14 +125,15 @@ Return ONLY a JSON object with keys:
 
 No markdown, no explanation, just raw JSON.`,
           "Analyze ONLY what clothing items are clearly visible in this photo. Do not guess items that are not shown.",
-          base64
+          base64,
+          mediaType
         );
         const clean = raw.replace(/```json|```/g, "").trim();
         const parsed = JSON.parse(clean);
-        setUploadPreview({ loading: false, base64, dataUrl, ...parsed });
+        setUploadPreview({ loading: false, base64, dataUrl, mediaType, ...parsed });
         setAddForm({ name: parsed.name || "", cat: parsed.cat || "tops", color: parsed.color || "", notes: "" });
       } catch {
-        setUploadPreview({ loading: false, base64, dataUrl, name: "", cat: "tops", color: "", tags: [] });
+        setUploadPreview({ loading: false, base64, dataUrl, mediaType, name: "", cat: "tops", color: "", tags: [] });
         setAddForm({ name: "", cat: "tops", color: "", notes: "" });
       }
     };
@@ -243,11 +249,11 @@ No markdown, no explanation, just raw JSON.`,
   };
 
   // Renders either real image or emoji fallback
-  const ItemDisplay = ({ item, size = 100, fontSize = 34, borderRadius = 0 }) => (
+  const ItemDisplay = ({ item, size = 100, fontSize = 34, borderRadius = 0, fill = false }) => (
     item.image
       ? <img src={item.image} alt={item.name}
-          style={{ width: size, height: size, objectFit: "cover", borderRadius, display: "block" }} />
-      : <div style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center",
+          style={{ width: fill ? "100%" : size, height: fill ? "100%" : size, objectFit: "cover", borderRadius, display: "block" }} />
+      : <div style={{ width: fill ? "100%" : size, height: fill ? "100%" : size, display: "flex", alignItems: "center", justifyContent: "center",
           fontSize, background: "#f0ece6", borderRadius }}>
           {item.emoji}
         </div>
@@ -307,7 +313,7 @@ No markdown, no explanation, just raw JSON.`,
                     <div key={item.id} style={{ ...s.clothCard, ...(selectedIds.has(item.id) ? s.clothCardSelected : {}) }}
                       onClick={() => toggleSelect(item.id)}>
                       <div style={{ width: "100%", aspectRatio: "1", overflow: "hidden" }}>
-                        <ItemDisplay item={item} size="100%" fontSize={34} />
+                        <ItemDisplay item={item} fill fontSize={34} />
                       </div>
                       <div style={s.clothInfo}>
                         <div style={s.clothName}>{item.name}</div>
@@ -416,7 +422,7 @@ No markdown, no explanation, just raw JSON.`,
                   <div key={item.id} style={{ ...s.clothCard, ...(matchItem?.id === item.id ? s.clothCardSelected : {}) }}
                     onClick={() => getMatches(item)}>
                     <div style={{ width: "100%", aspectRatio: "1", overflow: "hidden" }}>
-                      <ItemDisplay item={item} size="100%" fontSize={34} />
+                      <ItemDisplay item={item} fill fontSize={34} />
                     </div>
                     <div style={s.clothInfo}>
                       <div style={s.clothName}>{item.name}</div>
